@@ -2,7 +2,7 @@
 #define BUZZER_H_INCLUDED
 #include "toca_musica.h"
 
-class Buzzer : public TocaMusica
+class Buzzer
 {
 public:
   /************************
@@ -13,11 +13,11 @@ public:
   saidas
     nenhuma
   *************************/
+  Buzzer(int pino);
   void tocarmusica(void);
 
 private:
     int buzzer_pin;
-
 };
 
 #endif // BUZZER_H_INCLUDED

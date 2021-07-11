@@ -1,12 +1,7 @@
-#include <Arduino.h>
+int buzzer_pin = 12;
 
-#include "definicoes_sistema.h"
-#include "buzzer.h"
-
-buzzer::buzzer(int pino)
-{
-    this->buzzer_pin = pino;
-    pinMode(buzzer_pin,OUTPUT);
+void setup(){
+pinMode(buzzer_pin,OUTPUT);
 }
 
 void tocarmusica(void)
@@ -26,4 +21,8 @@ void tocarmusica(void)
     tone(buzzer_pin,330);
     delay(650);
     noTone(buzzer_pin);
+}
+
+void loop(){
+  tocarmusica();
 }
