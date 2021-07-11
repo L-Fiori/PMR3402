@@ -3,27 +3,27 @@
 #include "definicoes_sistema.h"
 #include "buzzer.h"
 
-buzzer::buzzer(int pino)
+Buzzer::Buzzer(int pino)
 {
     this->buzzer_pin = pino;
-    pinMode(buzzer_pin,OUTPUT);
+    pinMode(buzzer_pin, OUTPUT);
 }
 
-void tocarmusica(void)
+void Buzzer::tocaMusica(void)
 {
-    tone(buzzer_pin,494);
+    tone(buzzer_pin, 494);
     delay(650);
     noTone(buzzer_pin);
-    tone(buzzer_pin,554);
+    tone(buzzer_pin, 554);
     delay(650);
     noTone(buzzer_pin);
-    tone(buzzer_pin,440);
+    tone(buzzer_pin, 440);
     delay(650);
     noTone(buzzer_pin);
-    tone(buzzer_pin,220);
+    tone(buzzer_pin, 220);
     delay(650);
     noTone(buzzer_pin);
-    tone(buzzer_pin,330);
+    tone(buzzer_pin, 330);
     delay(650);
     noTone(buzzer_pin);
 }

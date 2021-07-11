@@ -1,6 +1,4 @@
 #include <Arduino.h>
-#include <Servo.h>
-Servo servo;
 
 #include "definicoes_sistema.h"
 #include "servo_motor.h"
@@ -9,11 +7,11 @@ ServoMotor::ServoMotor(int pino)
 {
     this->servo_pin = pino;
     this->servo_angulo = angulo;
-    servo.attach(pino);
-    servo.write(0);
+    this->servo.attach(pino);
+    this->servo.write(0);
 }
 
-void servoAngulo(int tempo)
+void ServoMotor::servoAngulo(int tempo)
 {
     servo.write(angulo);
     delay(tempo);

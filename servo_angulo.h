@@ -1,8 +1,0 @@
-#ifndef SERVO_ANGULO_H_INCLUDED
-#define SERVO_ANGULO_H_INCLUDED
-
-class ServoAngulo
-{
-};
-
-#endif // SERVO_ANGULO_H_INCLUDED

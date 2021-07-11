@@ -1,8 +1,0 @@
-#ifndef RECEBE_PARAMETROS_H_INCLUDED
-#define RECEBE_PARAMETROS_H_INCLUDED
-
-class RecebeParametros
-{
-};
-
-#endif // RECEBE_PARAMETROS_H_INCLUDED

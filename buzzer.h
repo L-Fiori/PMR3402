@@ -1,23 +1,15 @@
 #ifndef BUZZER_H_INCLUDED
 #define BUZZER_H_INCLUDED
-#include "toca_musica.h"
+#include "toca_musica_interface.h"
 
-class Buzzer
+class Buzzer : public TocaMusicaInterface
 {
 public:
-  /************************
-   tocarmusica
-  requisita o sinal sonoro
-  entradas
-    nenhuma
-  saidas
-    nenhuma
-  *************************/
   Buzzer(int pino);
-  void tocarmusica(void);
+  void tocaMusica(void);
 
 private:
-    int buzzer_pin;
+  int buzzer_pin;
 };
 
 #endif // BUZZER_H_INCLUDED

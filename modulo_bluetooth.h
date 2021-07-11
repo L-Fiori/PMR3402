@@ -1,9 +1,9 @@
 #ifndef MODULO_BLUETOOTH_H_INCLUDED
 #define MODULO_BLUETOOTH_H_INCLUDED
 
-#include "recebe_parametros.h"
+#include "recebe_parametros_interface.h"
 
-class ModuloBluetooth : public RecebeParametros
+class ModuloBluetooth : public RecebeParametrosInterface
 {
 };
 

@@ -1,6 +1,4 @@
 #include <Arduino.h>
-#include <RTClib.h>
-RTC_DS3231 rtc;
 
 #include "definicoes_sistema.h"
 #include "relogio.h"
@@ -8,10 +6,10 @@ RTC_DS3231 rtc;
 Relogio::Relogio(int pino)
 {
     this->rtc_pin = pino;
-    pinMode(rtc_pin,INPUT);
+    pinMode(rtc_pin, INPUT);
 }
 
-int tempoAtual()
+int Relogio::tempoAtual()
 {
     DateTime now = rtc.now();
     return {now.hour(), now.minute()};

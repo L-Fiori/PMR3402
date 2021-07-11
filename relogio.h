@@ -2,24 +2,18 @@
 #define RELOGIO_H_INCLUDED
 
 #include <RTC.h>
-#include "tempo_atual.h"
+#include <RTClib.h>
+#include "tempo_atual_interface.h"
 
-class Relogio
+class Relogio : public TempoAtualInterface
 {
 public:
-  /************************
-   tempoAtual
-  Entrega o horário atual
-  entradas
-    nenhuma
-  saidas
-    tempo atual
-  *************************/
   Relogio(int pino);
   void tempoAtual();
 
 private:
-    int rtc_pin;
+  RTC_DS3231 rtc;
+  int rtc_pin;
 };
 
 #endif // RELOGIO_H_INCLUDED
