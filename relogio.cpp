@@ -12,5 +12,5 @@ Relogio::Relogio(int pino)
 int Relogio::tempoAtual()
 {
     DateTime now = rtc.now();
-    return {now.hour(), now.minute()};
+    return now;
 }

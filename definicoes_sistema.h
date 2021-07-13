@@ -15,7 +15,7 @@
 
 // EVENTOS
 #define NENHUM_EVENTO -1
-#define CONECTAR 0
+#define CONECTADO 0
 #define PARAMETROS_RECEBIDOS 1
 #define HORARIO_INICIO 2
 #define HORARIO_FIM 3
