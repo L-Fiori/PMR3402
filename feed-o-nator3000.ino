@@ -15,6 +15,7 @@
 #define PIN_SERVO 11
 #define PIN_RX 7
 #define PIN_TX 9
+#define SERVO_ANGULO 30
 
 /***********************************************************************
  Componentes
@@ -22,7 +23,7 @@
 Buzzer buz(PIN_BUZZER);
 ModuloBluetooth mbt(PIN_RX, PIN_TX);
 Relogio rel(PIN_RELOGIO);
-ServoMotor srv(PIN_SERVO);
+ServoMotor srv(PIN_SERVO, SERVO_ANGULO);
 
 /***********************************************************************
  Estaticos
@@ -45,32 +46,45 @@ int executarAcao(int codigoAcao)
 	switch (codigoAcao)
 	{
 	case A01:
-		tmr.iniciar(true);
 		break;
 	case A02:
-		sne.bip();
-		com.notificar("Alarme em alerta");
-		tmr.iniciar(false);
+		char modo = mbt.recebeParametros();
+
+		if (modo == 'H')
+		{
+			char qtd_porcoes = mbt.recebeParametros(); // Provavel que precise transformar em int
+
+			char[qtd_porcoes * 2] parametro; // Indices pares --> horas; indices impares --> minutos
+
+			for (i = 0; i < qtd_porcoes; i++)
+			{
+				char hora_parametro = mbt.recebeParametros();
+				char min_parametro = mbt.recebeParametros();
+
+				parametro[2 * i] = hora_parametro;
+				parametro[2 * i + 1] = min_parametro;
+			}
+
+			char tempo_abertura = mbt.recebeParametros();
+		}
+
+		elseif(modo == 'I')
+		{
+			char tempo_parametro = mbt.recebeParametros(); // Sempre em minutos
+			char hora_inicial = mbt.recebeParametros();
+			char min_inicial = mbt.recebeParametros();
+			char tempo_abertura = mbt.recebeParametros();
+		}
 		break;
 	case A03:
-		com.notificar("Alarme desacionado");
-		tmr.iniciar(false);
+		srv.servoAngulo();
 		break;
 	case A04:
-		com.notificar("Alarme desacionado");
+		srv.servoFecha();
+		if (modo == 'I')
+			tempo_corrido = 0;
 		break;
 	case A05:
-		tmr.iniciar(true);
-		break;
-	case A06:
-		sne.acionar(true);
-		com.notificar("Invasao");
-		tmr.iniciar(false);
-		break;
-	case A07:
-		com.notificar("Alarme desacionado");
-		tmr.iniciar(false);
-		sne.acionar(false);
 		break;
 	} // switch
 
@@ -140,7 +154,7 @@ void iniciaSistema()
  Retorno: codigo do evento
 *************************************************************************/
 
-int obterEvento()
+int obterEvento(int hora_parametro, int min_parametro, int tempo_abertura)
 {
 	int retval = NENHUM_EVENTO;
 
@@ -149,7 +163,7 @@ int obterEvento()
 	int min_rtc = now.minute();
 	int seg_rtc = now.second();
 
-	if (bluetooth.available() && estado == DESCONECTADO)
+	if (estado == DESCONECTADO && bluetooth.available())
 		return CONECTADO;
 
 	if (mbt.recebeParametros() == 'A') // Acabou de configurar
@@ -158,10 +172,27 @@ int obterEvento()
 	if (mbt.recebeParametros() == 'Q') // Quero configurar
 		return CONFIGURAR_PARAMETROS;
 
-	if (hora_rtc == hora_parametro && min_rtc == min_parametro && estado == OPERANDO)
-		return HORARIO_INICIO;
+	if (estado == OPERANDO)
+	{
+		if (modo == 'H')
+		{
+			if (hora_rtc == hora_parametro && min_rtc == min_parametro) // Precisa mudar pra comparar com um array e nao somente uma variavel simples.
+				return HORARIO_INICIO;
+		}
+		elseif(modo == 'I')
+		{
+			if (hora_rtc == hora_inicial && min_rtc == min_inicial && seg_rtc == 0)
+			{
+				tempo_corrido = 0;
+				// tempo_corrido = rel.tempoAtual() - ; contar o tempo a partir do horario de inicio
+				return HORARIO_INICIO;
+			}
+			if (tempo_corrido == tempo_parametro)
+				return HORARIO_INICIO;
+		}
+	}
 
-	if (seg_rtc == 'tempo necessario' && estado == DESPEJO) // Tempo necessario depende do modo de operacao (porcao)
+	if (estado == DESPEJO && seg_rtc == tempo_abertura) // Tempo de abertura depende do modo de operacao (porcao)
 		return HORARIO_FIM;
 
 	return retval;

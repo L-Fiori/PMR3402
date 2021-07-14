@@ -3,7 +3,7 @@
 #include "definicoes_sistema.h"
 #include "servo_motor.h"
 
-ServoMotor::ServoMotor(int pino)
+ServoMotor::ServoMotor(int pino, int angulo)
 {
     this->servo_pin = pino;
     this->servo_angulo = angulo;
@@ -11,9 +11,12 @@ ServoMotor::ServoMotor(int pino)
     this->servo.write(0);
 }
 
-void ServoMotor::servoAngulo(int tempo)
+void ServoMotor::servoAngulo()
 {
-    servo.write(angulo);
-    delay(tempo);
+    servo.write(this->servo_angulo);
+}
+
+void ServoMotor::servoFecha()
+{
     servo.write(0);
 }
