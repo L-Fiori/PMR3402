@@ -34,6 +34,8 @@ int estado = DESCONECTADO;
 int codigoAcao;
 int acao_matrizTransicaoEstados[NUM_ESTADOS][NUM_EVENTOS];
 int proximo_estado_matrizTransicaoEstados[NUM_ESTADOS][NUM_EVENTOS];
+int tempo_abertura;
+String modo;
 
 int executarAcao(int codigoAcao)
 {
@@ -48,24 +50,35 @@ int executarAcao(int codigoAcao)
 	case A01:
 		break;
 	case A02:
-		char modo = mbt.recebeParametros();
+		mbt.escreveTela("Digite H para modo horário ou I para modo intervalo");
+		modo = mbt.recebeParametros();
 
 		if (modo == 'H')
 		{
-			char qtd_porcoes = mbt.recebeParametros(); // Provavel que precise transformar em int
+			mbt.escreveTela("Digite o número de porções diárias");
+			String qtd_porcoes = mbt.recebeParametros(); // Provavel que precise transformar em int
+			qtd_porcoes = stoi(qtd_porcoes);
 
-			char[qtd_porcoes * 2] parametro; // Indices pares --> horas; indices impares --> minutos
+			global int[qtd_porcoes * 2] parametro; // Indices pares --> horas; indices impares --> minutos
 
 			for (i = 0; i < qtd_porcoes; i++)
 			{
-				char hora_parametro = mbt.recebeParametros();
-				char min_parametro = mbt.recebeParametros();
+				mbt.escreveTela("Digite o horário da porção no modelo HH:MM");
+				String horario = mbt.recebeParametros();
 
-				parametro[2 * i] = hora_parametro;
-				parametro[2 * i + 1] = min_parametro;
+				parametro[2 * i] = stoi(horario[0] + horario[1]);
+				parametro[2 * i + 1] = stoi(horario[3] + horario[4]);
 			}
 
-			char tempo_abertura = mbt.recebeParametros();
+			mbt.escreveTela("Digite o tamanho das porções (P, M ou G)");
+			String tamanho_porcao = mbt.recebeParametros();
+
+			if (tamanho_porcao == "P")
+				tempo_abertura = 1;
+			elseif(tamanho_porcao == "M")
+			    tempo_abertura = 2;
+			elseif(tamanho_porcao == "G")
+			    tempo_abertura = 3;
 		}
 
 		elseif(modo == 'I')
@@ -176,8 +189,14 @@ int obterEvento(int hora_parametro, int min_parametro, int tempo_abertura)
 	{
 		if (modo == 'H')
 		{
-			if (hora_rtc == hora_parametro && min_rtc == min_parametro) // Precisa mudar pra comparar com um array e nao somente uma variavel simples.
-				return HORARIO_INICIO;
+			int array_size = sizeof(parametro) / sizeof(parametro[0]);
+			for (int i = 0; i < array_size; i = i + 2)
+			{
+				if (parametro[i] == hora_rtc && parametro[i + 1] == min_rtc && seg_rtc == 0)
+				{
+					return HORARIO_INICIO;
+				}
+			}
 		}
 		elseif(modo == 'I')
 		{
@@ -232,6 +251,7 @@ int obterProximoEstado(int estado, int codigoEvento)
 void setup()
 {
 	Serial.begin(9600);
+	Dabble.begin(9600);
 
 	iniciaSistema();
 	Serial.println("Feed-o-nator 3000 iniciado");
@@ -260,4 +280,3 @@ void loop()
 		Serial.println(codigoAcao);
 	}
 } // loop
-}
