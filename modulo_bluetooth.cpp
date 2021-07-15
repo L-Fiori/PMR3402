@@ -3,20 +3,24 @@
 #include "definicoes_sistema.h"
 #include "modulo_bluetooth.h"
 
-ModuloBluetooth::ModuloBluetooth(int pinoRX, int pinoTX) : bluetooth(pinoTX, pinoRX)
+ModuloBluetooth::ModuloBluetooth
+{}
+
+String ModuloBluetooth::recebeParametros()
 {
-    this->bluetooth.begin(9600);
+  Serialdata = "";
+  Dabble.processInput();
+  if(Terminal.available())
+  {
+    while (Terminal.available() != 0)
+    {
+      Serialdata = String(Serialdata + char(Terminal.read()));
+    }
+  }
+  return Serialdata;
 }
 
-int ModuloBluetooth::recebeParametros()
+void ModuloBluetooth::escreveTela(String tela)
 {
-    if (bluetooth.available())
-    {
-        char leitura = bluetooth.read();
-        return leitura;
-    }
-    else
-    {
-        return (-1);
-    }
+  Terminal.println(tela);
 }
