@@ -70,24 +70,25 @@ int executarAcao(int codigoAcao)
 				parametro[2 * i + 1] = stoi(horario[3] + horario[4]);
 			}
 
-			mbt.escreveTela("Digite o tamanho das porções (P, M ou G)");
-			String tamanho_porcao = mbt.recebeParametros();
-
-			if (tamanho_porcao == "P")
-				tempo_abertura = 1;
-			elseif(tamanho_porcao == "M")
-			    tempo_abertura = 2;
-			elseif(tamanho_porcao == "G")
-			    tempo_abertura = 3;
 		}
 
 		elseif(modo == 'I')
 		{
-			char tempo_parametro = mbt.recebeParametros(); // Sempre em minutos
-			char hora_inicial = mbt.recebeParametros();
-			char min_inicial = mbt.recebeParametros();
-			char tempo_abertura = mbt.recebeParametros();
+			mbt.escreveTela("Digite o horário de início da contagem do intervalo no formato HH:MM");
+			String horario_inicial = mbt.recebeParametros();
+			mbt.escreveTela("Digite o intervalo entre despejos a partir do horário inicial em minutos");
+			String intervalo = mbt.recebeParametros();
 		}
+
+		mbt.escreveTela("Digite o tamanho das porções (P, M ou G)");
+		String tamanho_porcao = mbt.recebeParametros();
+
+		if (tamanho_porcao == "P")
+				tempo_abertura = 1;
+		elseif(tamanho_porcao == "M")
+			    tempo_abertura = 2;
+		elseif(tamanho_porcao == "G")
+			    tempo_abertura = 3;
 		break;
 	case A03:
 		srv.servoAngulo();
@@ -179,6 +180,8 @@ int obterEvento(int hora_parametro, int min_parametro, int tempo_abertura)
 	if (estado == DESCONECTADO && bluetooth.available())
 		return CONECTADO;
 
+	// isso ainda não está bom, nao sabemos onde colocar a string "digite Q para configurar e A para terminei de configurar"
+	
 	if (mbt.recebeParametros() == 'A') // Acabou de configurar
 		return PARAMETROS_RECEBIDOS;
 
@@ -200,14 +203,19 @@ int obterEvento(int hora_parametro, int min_parametro, int tempo_abertura)
 		}
 		elseif(modo == 'I')
 		{
-			if (hora_rtc == hora_inicial && min_rtc == min_inicial && seg_rtc == 0)
+			if (seg_rtc == 0){
+				delay(1000)
+				tempo_corrido ++;
+			}
+			if (hora_rtc == (horario_inicial[0]+horario_inicial[1]) && min_rtc == (horario_inicial[3]+horario_inicial[4]) && seg_rtc == 0)
 			{
 				tempo_corrido = 0;
-				// tempo_corrido = rel.tempoAtual() - ; contar o tempo a partir do horario de inicio
 				return HORARIO_INICIO;
 			}
-			if (tempo_corrido == tempo_parametro)
+			if (tempo_corrido == intervalo){
+				tempo_corrido = 0;
 				return HORARIO_INICIO;
+			}
 		}
 	}
 
