@@ -1,10 +1,11 @@
 #include <Arduino.h>
-
+#define INCLUDE_TERMINAL_MODULE
 #include "definicoes_sistema.h"
 #include "modulo_bluetooth.h"
 
-//ModuloBluetooth::ModuloBluetooth
-//{}
+ModuloBluetooth::ModuloBluetooth()
+{
+}
 
 String ModuloBluetooth::recebeParametros()
 {

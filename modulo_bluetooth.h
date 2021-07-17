@@ -1,7 +1,6 @@
 #ifndef MODULO_BLUETOOTH_H_INCLUDED
 #define MODULO_BLUETOOTH_H_INCLUDED
 #define CUSTOM_SETTINGS
-#define INCLUDE_TERMINAL_MODULE
 
 #include "recebe_parametros_interface.h"
 #include <Dabble.h>
@@ -9,7 +8,7 @@
 class ModuloBluetooth : public RecebeParametrosInterface
 {
 public:
-  //ModuloBluetooth;
+  ModuloBluetooth();
   String recebeParametros();
   void escreveTela(String tela);
 

@@ -13,8 +13,10 @@
 #define PIN_BUZZER 8
 #define PIN_RELOGIO 10
 #define PIN_SERVO 11
-#define PIN_RX 7
-#define PIN_TX 9
+#define PIN_RX 3
+#define PIN_TX 2
+#define PIN_SCL A5 // Pino de cima do rtc
+#define PIN_SDA A4 // Pino segundo de cima do rtc
 #define SERVO_ANGULO 30
 
 /***********************************************************************
@@ -37,11 +39,34 @@ int codigoAcao;
 int acao_matrizTransicaoEstados[NUM_ESTADOS][NUM_EVENTOS];
 int proximo_estado_matrizTransicaoEstados[NUM_ESTADOS][NUM_EVENTOS];
 int tempo_abertura;
-String modo;
+String modo = "";
 String horario_inicial;
 String intervalo;
 int parametro[100];
 int tempo_corrido;
+int hora_rtc;
+int min_rtc;
+int seg_rtc;
+
+String recebeParametro(){
+  unsigned long time_agora;
+  unsigned long timer;
+  String tipo = "";
+  
+  time_agora = millis();
+  timer = millis();
+  while (timer < time_agora + 15000){
+    timer =  millis();
+    Serial.println(timer);
+    tipo = mbt.recebeParametros();
+    if (tipo != ""){
+      break;
+    }
+  }
+
+  return tipo;
+}
+
 
 int executarAcao(int codigoAcao)
 {
@@ -57,12 +82,12 @@ int executarAcao(int codigoAcao)
 		break;
 	case A02:
 		mbt.escreveTela("Digite H para modo horário ou I para modo intervalo");
-		modo = mbt.recebeParametros();
+    modo = recebeParametro();
 
-		if (modo == 'H')
+		if (modo == "H")
 		{
 			mbt.escreveTela("Digite o número de porções diárias");
-			String qtd_porcoes_str = mbt.recebeParametros(); // Provavel que precise transformar em int
+			String qtd_porcoes_str = recebeParametro();
 			//qtd_porcoes = (qtd_porcoes);
       int qtd_porcoes = qtd_porcoes_str.toInt();
 
@@ -71,11 +96,15 @@ int executarAcao(int codigoAcao)
 
 			for (int i = 0; i < qtd_porcoes; i++)
 			{
-				mbt.escreveTela("Digite o horário da porção no modelo HH:MM");
-				String horario = mbt.recebeParametros();
-
-				parametro[2 * i] = (horario[0] + horario[1]);//.toInt();//stoi(horario[0] + horario[1]);
-				parametro[2 * i + 1] = (horario[3] + horario[4]);//.toInt();//stoi(horario[3] + horario[4]);
+				mbt.escreveTela("Digite o horário da porção no modelo HHMM");
+				String hora_recebida = recebeParametro();
+        int hora_recebida_int[4];
+        for (int i = 0; i < sizeof(hora_recebida); i++){
+          hora_recebida_int[i] = atoi(hora_recebida[i]);
+        }
+       
+				parametro[2 * i] = hora_recebida_int[0]*10 + hora_recebida_int[1] ;
+				parametro[2 * i + 1] = hora_recebida_int[2]*10 + hora_recebida_int[3];
 			}
 
 		}
@@ -83,13 +112,13 @@ int executarAcao(int codigoAcao)
 		else if(modo == 'I')
 		{
 			mbt.escreveTela("Digite o horário de início da contagem do intervalo no formato HH:MM");
-			horario_inicial = mbt.recebeParametros();
+			horario_inicial = recebeParametro();
 			mbt.escreveTela("Digite o intervalo entre despejos a partir do horário inicial em minutos");
-			String intervalo = mbt.recebeParametros();
+			String intervalo = recebeParametro();
 		}
 
 		mbt.escreveTela("Digite o tamanho das porções (P, M ou G)");
-		String tamanho_porcao = mbt.recebeParametros();
+		String tamanho_porcao = recebeParametro();
 
 		if (tamanho_porcao == "P")
 				tempo_abertura = 1;
@@ -123,7 +152,7 @@ void iniciaMaquinaEstados()
 {
 	/*
 		             Conectado          Parametros_recebidos     Horario_inicio      Horario_fim         Configurar_parametros   (EVENTOS)
-	Desconectado	Configuracao / A01    
+	Desconectado	Configuracao / A02    
 	Configuracao                             Operando / A02
 	Operando                                                        Despejo / A03                            Configuracao / A05
 	Despejo                                                                            Operando / A04
@@ -142,7 +171,7 @@ void iniciaMaquinaEstados()
 		}
 	}
 	proximo_estado_matrizTransicaoEstados[DESCONECTADO][CONECTADO] = CONFIGURACAO;
-	acao_matrizTransicaoEstados[DESCONECTADO][CONECTADO] = A01;
+	acao_matrizTransicaoEstados[DESCONECTADO][CONECTADO] = A02;
 
 	proximo_estado_matrizTransicaoEstados[CONFIGURACAO][PARAMETROS_RECEBIDOS] = OPERANDO;
 	acao_matrizTransicaoEstados[CONFIGURACAO][PARAMETROS_RECEBIDOS] = A02;
@@ -180,10 +209,16 @@ int obterEvento()
 {
 	int retval = NENHUM_EVENTO;
 
-	DateTime now = rel.tempoAtual();
-	int hora_rtc = now.hour();
-	int min_rtc = now.minute();
-	int seg_rtc = now.second();
+	DateTime agora = rel.tempoAtual();
+	int hora_rtc = agora.hour();
+	int min_rtc = agora.minute();
+	int seg_rtc = agora.second();
+  //Serial.print("Hora:");
+  //Serial.print(hora_rtc);
+  //Serial.print(":");
+  //Serial.print(min_rtc);
+  //Serial.print(":");
+  //Serial.println(seg_rtc);
 
 	if (estado == DESCONECTADO )//&& bluetooth.available())
 		return CONECTADO;
@@ -268,7 +303,12 @@ void setup()
 {
 	Serial.begin(9600);
 	Dabble.begin(9600);
-
+  if (! rel.rtc.begin()) {                         //Se o RTC nao for inicializado, faz
+    Serial.println("RTC NAO INICIALIZADO");    //Imprime o texto
+    while (1);                                 //Trava o programa
+  }
+  //rel.rtc.adjust(DateTime(2021, 7, 17, 17, 34, 30));
+  delay(100);
 	iniciaSistema();
 	Serial.println("Feed-o-nator 3000 iniciado");
 } // setup
@@ -278,6 +318,7 @@ void loop()
 	if (eventoInterno == NENHUM_EVENTO)
 	{
 		codigoEvento = obterEvento();
+    //Serial.println(estado);
 	}
 	else
 	{

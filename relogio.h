@@ -9,11 +9,11 @@ class Relogio : public TempoAtualInterface
 {
 public:
   //Relogio(int pino);
-  //Relogio;
+  Relogio();
   DateTime tempoAtual();
-
-private:
   RTC_DS1307 rtc;
+  
+private:
   //int rtc_pin;
 };
 
