@@ -4,29 +4,25 @@
 #define true 1
 #define false 0
 
-#define NUM_ESTADOS 4
-#define NUM_EVENTOS 5
+#define NUM_ESTADOS 3
+#define NUM_EVENTOS 4
 
 // ESTADOS
 #define DESCONECTADO 0
-#define CONFIGURACAO 1
-#define OPERANDO 2
-#define DESPEJO 3
+#define OPERANDO 1
+#define DESPEJO 2
 
 // EVENTOS
 #define NENHUM_EVENTO -1
 #define CONECTADO 0
-#define PARAMETROS_RECEBIDOS 1
+#define CONFIGURAR 1
 #define HORARIO_INICIO 2
 #define HORARIO_FIM 3
-#define CONFIGURAR_PARAMETROS 4
 
 // ACOES
 #define NENHUMA_ACAO -1
 #define A01 0
 #define A02 1
 #define A03 2
-#define A04 3
-#define A05 4
 
 #endif // DEFINICOES_SISTEMA_H_INCLUDED

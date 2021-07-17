@@ -8,7 +8,6 @@
 class Relogio : public TempoAtualInterface
 {
 public:
-  //Relogio(int pino);
   Relogio();
   DateTime tempoAtual();
   RTC_DS1307 rtc;

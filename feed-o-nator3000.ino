@@ -71,6 +71,7 @@ String recebeParametro(){
 int executarAcao(int codigoAcao)
 {
 	int retval;
+  unsigned long tempo = 15000;
 
 	retval = NENHUM_EVENTO;
 	if (codigoAcao == NENHUMA_ACAO)
@@ -79,8 +80,6 @@ int executarAcao(int codigoAcao)
 	switch (codigoAcao)
 	{
 	case A01:
-		break;
-	case A02:
 		mbt.escreveTela("Digite H para modo horário ou I para modo intervalo");
     modo = recebeParametro();
 
@@ -109,7 +108,7 @@ int executarAcao(int codigoAcao)
 
 		}
 
-		else if(modo == 'I')
+		else if(modo == "I")
 		{
 			mbt.escreveTela("Digite o horário de início da contagem do intervalo no formato HH:MM");
 			horario_inicial = recebeParametro();
@@ -127,15 +126,13 @@ int executarAcao(int codigoAcao)
 		else if(tamanho_porcao == "G")
 			    tempo_abertura = 3;
 		break;
-	case A03:
+	case A02:
 		srv.servoAngulo();
 		break;
-	case A04:
+	case A03:
 		srv.servoFecha();
-		if (modo == 'I')
+		if (modo == "I")
 			tempo_corrido = 0;
-		break;
-	case A05:
 		break;
 	} // switch
 
@@ -151,11 +148,10 @@ int executarAcao(int codigoAcao)
 void iniciaMaquinaEstados()
 {
 	/*
-		             Conectado          Parametros_recebidos     Horario_inicio      Horario_fim         Configurar_parametros   (EVENTOS)
-	Desconectado	Configuracao / A02    
-	Configuracao                             Operando / A02
-	Operando                                                        Despejo / A03                            Configuracao / A05
-	Despejo                                                                            Operando / A04
+		             Conectado            Configurar           Horario_inicio        Horario_fim    (EVENTOS)
+	Desconectado	 Operando / A01    
+	Operando                            Operando / A01        Despejo / A02                      
+	Despejo                                                                       Operando / A03
 	(ESTADOS)
 	*/
 
@@ -170,20 +166,17 @@ void iniciaMaquinaEstados()
 			proximo_estado_matrizTransicaoEstados[i][j] = i;
 		}
 	}
-	proximo_estado_matrizTransicaoEstados[DESCONECTADO][CONECTADO] = CONFIGURACAO;
-	acao_matrizTransicaoEstados[DESCONECTADO][CONECTADO] = A02;
+	proximo_estado_matrizTransicaoEstados[DESCONECTADO][CONECTADO] = OPERANDO;
+	acao_matrizTransicaoEstados[DESCONECTADO][CONECTADO] = A01;
 
-	proximo_estado_matrizTransicaoEstados[CONFIGURACAO][PARAMETROS_RECEBIDOS] = OPERANDO;
-	acao_matrizTransicaoEstados[CONFIGURACAO][PARAMETROS_RECEBIDOS] = A02;
+	proximo_estado_matrizTransicaoEstados[OPERANDO][CONFIGURAR] = OPERANDO;
+	acao_matrizTransicaoEstados[OPERANDO][CONFIGURAR] = A01;
 
 	proximo_estado_matrizTransicaoEstados[OPERANDO][HORARIO_INICIO] = DESPEJO;
-	acao_matrizTransicaoEstados[OPERANDO][HORARIO_INICIO] = A03;
-
-	proximo_estado_matrizTransicaoEstados[OPERANDO][CONFIGURAR_PARAMETROS] = CONFIGURACAO;
-	acao_matrizTransicaoEstados[OPERANDO][CONFIGURAR_PARAMETROS] = A05;
+	acao_matrizTransicaoEstados[OPERANDO][HORARIO_INICIO] = A02;
 
 	proximo_estado_matrizTransicaoEstados[DESPEJO][HORARIO_FIM] = OPERANDO;
-	acao_matrizTransicaoEstados[DESPEJO][HORARIO_FIM] = A04;
+	acao_matrizTransicaoEstados[DESPEJO][HORARIO_FIM] = A03;
 
 } // initStateMachine
 
@@ -224,12 +217,10 @@ int obterEvento()
 		return CONECTADO;
 
 	// isso ainda não está bom, nao sabemos onde colocar a string "digite Q para configurar e A para terminei de configurar"
-	
-	if (mbt.recebeParametros() == 'A') // Acabou de configurar
-		return PARAMETROS_RECEBIDOS;
-
-	if (mbt.recebeParametros() == 'Q') // Quero configurar
-		return CONFIGURAR_PARAMETROS;
+	//unsigned long tempo = 500;
+  //String configuracao = recebeParametro(tempo);
+	if (mbt.recebeParametros() == "Q") // Quero configurar
+		return CONFIGURAR;
 
 	if (estado == OPERANDO)
 	{
