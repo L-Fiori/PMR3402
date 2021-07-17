@@ -3,8 +3,8 @@
 #include "definicoes_sistema.h"
 #include "modulo_bluetooth.h"
 
-ModuloBluetooth::ModuloBluetooth
-{}
+//ModuloBluetooth::ModuloBluetooth
+//{}
 
 String ModuloBluetooth::recebeParametros()
 {

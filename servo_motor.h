@@ -8,7 +8,9 @@ class ServoMotor : public ServoAnguloInterface
 {
 public:
   ServoMotor(int pino);
-  void servoAngulo(int tempo);
+  //void servoAngulo(int tempo);
+  void servoAngulo();
+  void servoFecha();
 
 private:
   Servo servo;

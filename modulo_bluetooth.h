@@ -9,7 +9,7 @@
 class ModuloBluetooth : public RecebeParametrosInterface
 {
 public:
-  ModuloBluetooth;
+  //ModuloBluetooth;
   String recebeParametros();
   void escreveTela(String tela);
 

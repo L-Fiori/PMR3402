@@ -3,10 +3,11 @@
 #include "definicoes_sistema.h"
 #include "servo_motor.h"
 
-ServoMotor::ServoMotor(int pino, int angulo)
+//ServoMotor::ServoMotor(int pino, int angulo)
+ServoMotor::ServoMotor(int pino)
 {
     this->servo_pin = pino;
-    this->servo_angulo = angulo;
+    this->servo_angulo = 30;
     this->servo.attach(pino);
     this->servo.write(0);
 }

@@ -21,9 +21,11 @@
  Componentes
  ***********************************************************************/
 Buzzer buz(PIN_BUZZER);
-ModuloBluetooth mbt(PIN_RX, PIN_TX);
-Relogio rel(PIN_RELOGIO);
-ServoMotor srv(PIN_SERVO, SERVO_ANGULO);
+ModuloBluetooth mbt;
+//Relogio rel(PIN_RELOGIO);
+Relogio rel;
+//ServoMotor srv(PIN_SERVO, SERVO_ANGULO);
+ServoMotor srv(PIN_SERVO);
 
 /***********************************************************************
  Estaticos
@@ -36,6 +38,10 @@ int acao_matrizTransicaoEstados[NUM_ESTADOS][NUM_EVENTOS];
 int proximo_estado_matrizTransicaoEstados[NUM_ESTADOS][NUM_EVENTOS];
 int tempo_abertura;
 String modo;
+String horario_inicial;
+String intervalo;
+int parametro[100];
+int tempo_corrido;
 
 int executarAcao(int codigoAcao)
 {
@@ -56,26 +62,28 @@ int executarAcao(int codigoAcao)
 		if (modo == 'H')
 		{
 			mbt.escreveTela("Digite o número de porções diárias");
-			String qtd_porcoes = mbt.recebeParametros(); // Provavel que precise transformar em int
-			qtd_porcoes = stoi(qtd_porcoes);
+			String qtd_porcoes_str = mbt.recebeParametros(); // Provavel que precise transformar em int
+			//qtd_porcoes = (qtd_porcoes);
+      int qtd_porcoes = qtd_porcoes_str.toInt();
 
-			global int[qtd_porcoes * 2] parametro; // Indices pares --> horas; indices impares --> minutos
+			//global int[qtd_porcoes * 2] parametro; // Indices pares --> horas; indices impares --> minutos
+      parametro[qtd_porcoes * 2];
 
-			for (i = 0; i < qtd_porcoes; i++)
+			for (int i = 0; i < qtd_porcoes; i++)
 			{
 				mbt.escreveTela("Digite o horário da porção no modelo HH:MM");
 				String horario = mbt.recebeParametros();
 
-				parametro[2 * i] = stoi(horario[0] + horario[1]);
-				parametro[2 * i + 1] = stoi(horario[3] + horario[4]);
+				parametro[2 * i] = (horario[0] + horario[1]);//.toInt();//stoi(horario[0] + horario[1]);
+				parametro[2 * i + 1] = (horario[3] + horario[4]);//.toInt();//stoi(horario[3] + horario[4]);
 			}
 
 		}
 
-		elseif(modo == 'I')
+		else if(modo == 'I')
 		{
 			mbt.escreveTela("Digite o horário de início da contagem do intervalo no formato HH:MM");
-			String horario_inicial = mbt.recebeParametros();
+			horario_inicial = mbt.recebeParametros();
 			mbt.escreveTela("Digite o intervalo entre despejos a partir do horário inicial em minutos");
 			String intervalo = mbt.recebeParametros();
 		}
@@ -85,9 +93,9 @@ int executarAcao(int codigoAcao)
 
 		if (tamanho_porcao == "P")
 				tempo_abertura = 1;
-		elseif(tamanho_porcao == "M")
+		else if(tamanho_porcao == "M")
 			    tempo_abertura = 2;
-		elseif(tamanho_porcao == "G")
+		else if(tamanho_porcao == "G")
 			    tempo_abertura = 3;
 		break;
 	case A03:
@@ -168,7 +176,7 @@ void iniciaSistema()
  Retorno: codigo do evento
 *************************************************************************/
 
-int obterEvento(int hora_parametro, int min_parametro, int tempo_abertura)
+int obterEvento()
 {
 	int retval = NENHUM_EVENTO;
 
@@ -177,7 +185,7 @@ int obterEvento(int hora_parametro, int min_parametro, int tempo_abertura)
 	int min_rtc = now.minute();
 	int seg_rtc = now.second();
 
-	if (estado == DESCONECTADO && bluetooth.available())
+	if (estado == DESCONECTADO )//&& bluetooth.available())
 		return CONECTADO;
 
 	// isso ainda não está bom, nao sabemos onde colocar a string "digite Q para configurar e A para terminei de configurar"
@@ -201,10 +209,10 @@ int obterEvento(int hora_parametro, int min_parametro, int tempo_abertura)
 				}
 			}
 		}
-		elseif(modo == 'I')
+		else if(modo == 'I')
 		{
 			if (seg_rtc == 0){
-				delay(1000)
+				delay(1000);
 				tempo_corrido ++;
 			}
 			if (hora_rtc == (horario_inicial[0]+horario_inicial[1]) && min_rtc == (horario_inicial[3]+horario_inicial[4]) && seg_rtc == 0)
@@ -212,7 +220,7 @@ int obterEvento(int hora_parametro, int min_parametro, int tempo_abertura)
 				tempo_corrido = 0;
 				return HORARIO_INICIO;
 			}
-			if (tempo_corrido == intervalo){
+			if (tempo_corrido == intervalo.toInt()){
 				tempo_corrido = 0;
 				return HORARIO_INICIO;
 			}

@@ -11,7 +11,7 @@ class TempoAtualInterface
 	saidas
 	  tempo atual
 	*************************/
-	virtual void tempoAtual() = 0;
+	virtual DateTime tempoAtual() = 0;
 };
 
 #endif // TEMPO_ATUAL_INTERFACE_H_INCLUDED
