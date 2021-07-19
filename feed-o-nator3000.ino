@@ -14,7 +14,7 @@
  Pinos
  ***********************************************************************/
 #define PIN_BUZZER 8
-#define PIN_SERVO 11
+#define PIN_SERVO 10
 #define PIN_RX 3 // Bluetooth
 #define PIN_TX 2 // Bluetooth
 #define PIN_SCL A5 // Pino de cima do rtc
@@ -34,19 +34,17 @@ ServoMotor srv(PIN_SERVO);
  ***********************************************************************/
 int codigoEvento = NENHUM_EVENTO;
 int eventoInterno = NENHUM_EVENTO;
-int estado = DESCONECTADO;
+int estado = OPERANDO;
 int codigoAcao;
 int acao_matrizTransicaoEstados[NUM_ESTADOS][NUM_EVENTOS];
 int proximo_estado_matrizTransicaoEstados[NUM_ESTADOS][NUM_EVENTOS];
-int tempo_abertura;
+byte vetor_intervalos[12];
+byte parametro[18];
+byte tempo_abertura = 0;
+byte flag_intervalo = 1;
+String horario_inicial = "";
+String intervalo = "";
 String modo = "";
-String horario_inicial;
-String intervalo;
-int parametro[20];
-int tempo_corrido;
-int hora_rtc;
-int min_rtc;
-int seg_rtc;
 
 String recebeParametro(){
   unsigned long timer_inicio;
@@ -63,17 +61,14 @@ String recebeParametro(){
       break;
     }
   }
-
   return tipo;
 }
-
 
 int executarAcao(int codigoAcao)
 {
 	int retval;
-  int modo_eeprom = 0;
-  int modo_eeprom_l = 0;
-  int qtd_porcoes = 0;
+  byte modo_eeprom;
+  byte qtd_porcoes = 0;
   String intervalo = "";
 
 	retval = NENHUM_EVENTO;
@@ -99,16 +94,12 @@ int executarAcao(int codigoAcao)
 			{
 				mbt.escreveTela("Digite o horário da porção no modelo HHMM");
 				String hora_recebida_str = recebeParametro(); // Espera receber horário 
-        int hora_recebida_int[4];
+        byte hora_recebida_int[4];
         for (int i = 0; i < sizeof(hora_recebida_str); i++){
           hora_recebida_int[i] =  String(hora_recebida_str[i]).toInt(); // Transforma para inteiro
         }
 				parametro[2 * i] = hora_recebida_int[0]*10 + hora_recebida_int[1]; // Guarda as horas
 				parametro[2 * i + 1] = hora_recebida_int[2]*10 + hora_recebida_int[3]; // Guarda os minutos
-        Serial.print("Hora armz:");
-        Serial.print(parametro[2*i]);
-        Serial.print("Min armz:");
-        Serial.println(parametro[2*i+1]);
 			}
 
 		}
@@ -125,74 +116,75 @@ int executarAcao(int codigoAcao)
 		mbt.escreveTela("Digite o tamanho das porções (P, M ou G)");
 		String tamanho_porcao = recebeParametro();
 
-		if (tamanho_porcao == "P"){
-      tempo_abertura = 1;
-		}
-				
-		else if(tamanho_porcao == "M") {
-      tempo_abertura = 2;
-		}
-			    
-		else if(tamanho_porcao == "G"){
-      tempo_abertura = 3;
-		}
+		if (tamanho_porcao == "P")
+      tempo_abertura = 3;		
+		else if(tamanho_porcao == "M")
+      tempo_abertura = 5;
+		else if(tamanho_porcao == "G")
+      tempo_abertura = 7;
+
+    // Escrita na eeprom
+    if (modo_eeprom == 1){ // Modo = horario fixo
+      EEPROM.write(0,modo_eeprom);
+      EEPROM.write(1,qtd_porcoes); // Número de despejos
+      for (int i = 2; i <= 2*qtd_porcoes; i=i+2) {
+        EEPROM.write(i,parametro[i-2]);
+        EEPROM.write(i+1,parametro[i-1]);
+      }
+      EEPROM.write(2*qtd_porcoes+2,tempo_abertura);
+      flag_intervalo = 1; // Flag para construir o intervalo
+    }
+    else if(modo_eeprom == 2) { // Modo = intervalo
+      EEPROM.write(0,modo_eeprom);
+      int horario_eeprom = horario_inicial.toInt();
+      EEPROM.write(1,horario_eeprom/100); // Hora
+      EEPROM.write(2,horario_eeprom%100); // Minuto
+      EEPROM.write(3,intervalo.toInt()); // Intervalo de despejo
+      EEPROM.write(4,tempo_abertura); // Porção despejada
+      flag_intervalo = 1; // Flag para construir o intervalo
+    }
+
 		break;
 	case A02:
 		srv.servoAngulo();
 		break;
 	case A03:
 		srv.servoFecha();
-		if (modo == "I")
-			tempo_corrido = 0;
 		break;
 	} // switch
- 
-  // Escrevendo na eeprom
-  if (modo_eeprom == 1){ // Modo = horario fixo
-    EEPROM.write(0,modo_eeprom);
-    EEPROM.write(1,qtd_porcoes);
-    for (int i = 2; i <= 2*qtd_porcoes; i=i+2) {
-      EEPROM.write(i,parametro[i-2]);
-      EEPROM.write(i+1,parametro[i-1]);
-    }
-    EEPROM.write(2*qtd_porcoes+2,tempo_abertura);
-  }
-  else if(modo_eeprom == 2) { // Modo = intervalo
-    EEPROM.write(0,modo_eeprom);
-    int horario_eeprom = horario_inicial.toInt();
-    EEPROM.write(1,horario_eeprom/100);
-    EEPROM.write(2,horario_eeprom%100);
-    EEPROM.write(3,intervalo.toInt());
-    EEPROM.write(4,tempo_abertura);
-  }
 
   // Leitura da eeprom
-  modo_eeprom_l = EEPROM.read(0);
-  if (modo_eeprom_l == 1){
-    int qtd_porcoes_eeprom = EEPROM.read(1);
+  modo_eeprom = EEPROM.read(0);
+  if (modo_eeprom == 1){
+    byte qtd_porcoes_eeprom = EEPROM.read(1);
+    Serial.print("Leitura da eeprom: hora: ");
     for (int i = 2; i <= 2*qtd_porcoes_eeprom; i=i+2) {
-      int hora_eeprom = EEPROM.read(i);
-      int minuto_eeprom = EEPROM.read(i+1);
+      byte hora_eeprom = EEPROM.read(i);
+      byte minuto_eeprom = EEPROM.read(i+1);
       Serial.print(hora_eeprom);
       Serial.print(":");
-      Serial.println(minuto_eeprom);
+      Serial.print(minuto_eeprom);
+      Serial.print(", ");
     }
-    int tempo_eeprom = EEPROM.read(2*qtd_porcoes_eeprom+2);
-    Serial.print("  tempo: ");
+    byte tempo_eeprom = EEPROM.read(2*qtd_porcoes_eeprom+2);
+    Serial.print("; porção: ");
     Serial.println(tempo_eeprom);
   }
-  if (modo_eeprom_l == 2){
-    int hora_eeprom = EEPROM.read(1);
-    int minuto_eeprom = EEPROM.read(2);
-    int intervalo_eeprom = EEPROM.read(3);
-    int tempo_eeprom = EEPROM.read(4);
+  else if (modo_eeprom == 2){
+    byte hora_eeprom = EEPROM.read(1);
+    byte minuto_eeprom = EEPROM.read(2);
+    byte intervalo_eeprom = EEPROM.read(3);
+    byte tempo_eeprom = EEPROM.read(4);
+    Serial.print("Leitura da eeprom: hora: ");
     Serial.print(hora_eeprom);
     Serial.print(":");
     Serial.print(minuto_eeprom);
-    Serial.print("  intervalo: ");
+    Serial.print("; intervalo: ");
     Serial.print(intervalo_eeprom);
-    Serial.print("  tempo: ");
+    Serial.print("; porção: ");
     Serial.println(tempo_eeprom);
+    // Cria o vetor de intervalos para despejo
+    
   }
   
 	return retval;
@@ -207,10 +199,9 @@ int executarAcao(int codigoAcao)
 void iniciaMaquinaEstados()
 {
 	/*
-		             Conectado            Configurar           Horario_inicio        Horario_fim    (EVENTOS)
-	Desconectado	 Operando / A01    
-	Operando                            Operando / A01        Despejo / A02                      
-	Despejo                                                                       Operando / A03
+		            Configurar        Horario_inicio      Horario_fim    (EVENTOS)  
+	Operando    Operando / A01      Despejo / A02                      
+	Despejo                                            Operando / A03
 	(ESTADOS)
 	*/
 
@@ -225,8 +216,6 @@ void iniciaMaquinaEstados()
 			proximo_estado_matrizTransicaoEstados[i][j] = i;
 		}
 	}
-	proximo_estado_matrizTransicaoEstados[DESCONECTADO][CONECTADO] = OPERANDO;
-	acao_matrizTransicaoEstados[DESCONECTADO][CONECTADO] = A01;
 
 	proximo_estado_matrizTransicaoEstados[OPERANDO][CONFIGURAR] = OPERANDO;
 	acao_matrizTransicaoEstados[OPERANDO][CONFIGURAR] = A01;
@@ -263,10 +252,10 @@ int obterEvento()
   int modo_eeprom = EEPROM.read(0);
   
 	DateTime agora = rel.tempoAtual();
-	int hora_rtc = agora.hour();
-	int min_rtc = agora.minute();
-	int seg_rtc = agora.second();
-  static int flag_seg = seg_rtc;
+	byte hora_rtc = agora.hour();
+	byte min_rtc = agora.minute();
+	byte seg_rtc = agora.second();
+  static byte flag_seg = seg_rtc;
   if (flag_seg != seg_rtc){
     Serial.print("Hora:");
     Serial.print(hora_rtc);
@@ -274,12 +263,23 @@ int obterEvento()
     Serial.print(min_rtc);
     Serial.print(":");
     Serial.println(seg_rtc);
+    if (seg_rtc%10 == 0) {
+      mbt.escreveTela("Pressione Q para configurar o despejo");
+      Serial.print("Modo: ");
+      Serial.print(modo_eeprom);
+      Serial.print(" pos1: ");
+      Serial.print(EEPROM.read(1));
+      Serial.print(" pos2: ");
+      Serial.print(EEPROM.read(2));
+      Serial.print(" pos3: ");
+      Serial.println(EEPROM.read(3));
+    }
     flag_seg = seg_rtc;
   }
 
  
-	if (estado == DESCONECTADO )//&& bluetooth.available())
-		return CONECTADO;
+//	if (estado == DESCONECTADO )//&& bluetooth.available())
+//		return CONECTADO;
 
 	// isso ainda não está bom, nao sabemos onde colocar a string "digite Q para configurar e A para terminei de configurar"
 	//unsigned long tempo = 500;
@@ -291,30 +291,62 @@ int obterEvento()
 	{
 		if (modo_eeprom == 1)
 		{
-			int array_size = sizeof(parametro) / sizeof(parametro[0]);
-			for (int i = 0; i < array_size; i = i + 2)
-			{
-				if (parametro[i] == hora_rtc && parametro[i + 1] == min_rtc && seg_rtc == 0)
-				{
-					return HORARIO_INICIO;
-				}
-			}
+      int qtd_porcoes_eeprom = EEPROM.read(1);
+      int hora_eeprom = 0;
+      int minuto_eeprom = 0;
+      if (flag_intervalo == 1) {
+        Serial.print("Intervalo: ");
+        for (int i = 2; i <= 2*qtd_porcoes_eeprom; i=i+2) {
+          hora_eeprom = EEPROM.read(i);
+          minuto_eeprom = EEPROM.read(i+1);
+          vetor_intervalos[i-2] = hora_eeprom;
+          vetor_intervalos[i-1] = minuto_eeprom;
+          Serial.print(hora_eeprom);
+          Serial.print(":");
+          Serial.print(minuto_eeprom);
+          Serial.print(", ");
+        }
+        Serial.println("");
+        flag_intervalo = 0;
+      }
+      //byte tempo_eeprom = EEPROM.read(2*qtd_porcoes_eeprom+2);
+      
+      for (int i = 0; i < 2*qtd_porcoes_eeprom; i=i+2) {
+        if (hora_rtc == vetor_intervalos[i] && min_rtc == vetor_intervalos[i+1] && seg_rtc == 0) {
+          Serial.println("RAÇÃO DESPEJADA POR HORA FIXA");
+          mbt.escreveTela("RAÇÃO DESPEJADA POR HORA FIXA");
+          delay(1000);
+          return HORARIO_INICIO;
+        }
+      }
 		}
 		else if(modo_eeprom == 2)
 		{
-			if (seg_rtc == 0){
-				delay(1000);
-				tempo_corrido ++;
-			}
-			if (hora_rtc == (horario_inicial[0]+horario_inicial[1]) && min_rtc == (horario_inicial[3]+horario_inicial[4]) && seg_rtc == 0)
-			{
-				tempo_corrido = 0;
-				return HORARIO_INICIO;
-			}
-			if (tempo_corrido == intervalo.toInt()){
-				tempo_corrido = 0;
-				return HORARIO_INICIO;
-			}
+      int hora_eeprom = EEPROM.read(1);
+      int minuto_eeprom = EEPROM.read(2);
+      int intervalo_eeprom = EEPROM.read(3);
+      //byte tempo_eeprom = EEPROM.read(4);
+      if (flag_intervalo == 1) {
+        Serial.print("Intervalo: ");
+        for (int i = 0; i < (24/intervalo_eeprom); i++) {
+          vetor_intervalos[i] = intervalo_eeprom*i + hora_eeprom%intervalo_eeprom;
+          Serial.print(vetor_intervalos[i]);
+          Serial.print(":");
+          Serial.print(minuto_eeprom);
+          Serial.print(", ");
+        }
+        Serial.println("");
+        flag_intervalo = 0;
+      }
+      
+      for (int i = 0; i < 24/intervalo_eeprom; i++){
+        if (hora_rtc == vetor_intervalos[i] && min_rtc == minuto_eeprom && seg_rtc == 0) {
+          Serial.println("RAÇÃO DESPEJADA POR INTERVALO");
+          mbt.escreveTela("RAÇÃO DESPEJADA POR INTERVALO");
+          delay(1000);
+          return HORARIO_INICIO;
+        }
+      }
 		}
 	}
 
@@ -363,30 +395,14 @@ void setup()
     Serial.println("RTC NAO INICIALIZADO");    //Imprime o texto
     while (1);                                 //Trava o programa
   }
-  //rel.rtc.adjust(DateTime(2021, 7, 17, 17, 34, 30)); // Quando for necessário ajustar o horário do RTC
+  //rel.rtc.adjust(DateTime(2021, 7, 18, 20, 15, 00)); // Quando for necessário ajustar o horário do RTC
   delay(100);
 	iniciaSistema();
 	Serial.println("Feed-o-nator 3000 iniciado");
 } // setup
 
 void loop()
-{ 
-  int modo_eeprom_1 = EEPROM.read(0);
-  Serial.println(modo_eeprom_1);
-  if (modo_eeprom_1 == 2) {
-    int hora_eeprom = EEPROM.read(1);
-    int minuto_eeprom = EEPROM.read(2);
-    int intervalo_eeprom = EEPROM.read(3);
-    int tempo_eeprom = EEPROM.read(4);
-    Serial.print(hora_eeprom);
-    Serial.print(":");
-    Serial.print(minuto_eeprom);
-    Serial.print("  intervalo: ");
-    Serial.print(intervalo_eeprom);
-    Serial.print("  tempo: ");
-    Serial.println(tempo_eeprom);
-  }
-  
+{   
 	if (eventoInterno == NENHUM_EVENTO)
 	{
 		codigoEvento = obterEvento();

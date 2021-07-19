@@ -4,20 +4,18 @@
 #define true 1
 #define false 0
 
-#define NUM_ESTADOS 3
-#define NUM_EVENTOS 4
+#define NUM_ESTADOS 2
+#define NUM_EVENTOS 3
 
 // ESTADOS
-#define DESCONECTADO 0
-#define OPERANDO 1
-#define DESPEJO 2
+#define OPERANDO 0
+#define DESPEJO 1
 
 // EVENTOS
 #define NENHUM_EVENTO -1
-#define CONECTADO 0
-#define CONFIGURAR 1
-#define HORARIO_INICIO 2
-#define HORARIO_FIM 3
+#define CONFIGURAR 0
+#define HORARIO_INICIO 1
+#define HORARIO_FIM 2
 
 // ACOES
 #define NENHUMA_ACAO -1

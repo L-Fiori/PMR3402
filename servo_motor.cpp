@@ -3,21 +3,22 @@
 #include "definicoes_sistema.h"
 #include "servo_motor.h"
 
-//ServoMotor::ServoMotor(int pino, int angulo)
 ServoMotor::ServoMotor(int pino)
 {
+    //Serial.println("SERVOOO");
     this->servo_pin = pino;
     this->servo_angulo = 30;
     this->servo.attach(pino);
-    this->servo.write(0);
+    this->servo.write(5);
 }
 
 void ServoMotor::servoAngulo()
 {
-    servo.write(this->servo_angulo);
+    Serial.println("SERVOOO");
+    servo.write(30);
 }
 
 void ServoMotor::servoFecha()
 {
-    servo.write(0);
+    servo.write(5);
 }
