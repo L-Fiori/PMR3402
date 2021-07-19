@@ -14,6 +14,7 @@ public:
 	*************************/
 	virtual void servoAngulo() = 0;
   virtual void servoFecha() = 0;
+  virtual void servoPulse(int) = 0;
 };
 
 #endif // SERVO_ANGULO_INTERFACE_H_INCLUDED

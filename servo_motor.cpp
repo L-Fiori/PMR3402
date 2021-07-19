@@ -5,20 +5,30 @@
 
 ServoMotor::ServoMotor(int pino)
 {
-    //Serial.println("SERVOOO");
-    this->servo_pin = pino;
-    this->servo_angulo = 30;
-    this->servo.attach(pino);
-    this->servo.write(5);
+    this->servo_pin = pino; // Pino do servo, com PWM
+    pinMode(servo_pin,OUTPUT);
+    this->angle_max = 95; // Angulo máximo de abertura
+    this->angle = 0;
+    this->pwm = 0;
 }
 
 void ServoMotor::servoAngulo()
 {
-    Serial.println("SERVOOO");
-    servo.write(30);
+  for (angle = 5; angle <= 95; angle += 5)  {
+    this->servoPulse(angle);  }    
 }
 
 void ServoMotor::servoFecha()
 {
-    servo.write(5);
+  for (angle = 95; angle >= 5; angle -= 5)  {
+    this->servoPulse(angle);  }
+}
+
+void ServoMotor::servoPulse(int angle)
+{
+  pwm = (angle*11) + 500;      // Convert angle to microseconds
+  digitalWrite(servo_pin, HIGH);
+  delayMicroseconds(pwm);
+  digitalWrite(servo_pin, LOW);
+  delay(50);   
 }

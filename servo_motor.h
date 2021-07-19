@@ -1,20 +1,20 @@
 #ifndef SERVO_MOTOR_H_INCLUDED
 #define SERVO_MOTOR_H_INCLUDED
 
-#include <Servo.h>
 #include "servo_angulo_interface.h"
 
 class ServoMotor : public ServoAnguloInterface
 {
 public:
-  ServoMotor(int pino);
+  ServoMotor(int);
   void servoAngulo();
   void servoFecha();
-
+  void servoPulse(int);
 private:
-  Servo servo;
+  int angle_max;
+  int angle;
   int servo_pin;
-  int servo_angulo;
+  int pwm;
 };
 
 #endif // SERVO_MOTOR_H_INCLUDED
